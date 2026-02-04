@@ -4,12 +4,12 @@ Secure Password Generator
 
 Generates random passwords that meet the following requirements:
 - At least 20 characters long
-- Contains at least 4 of the following character classes:
+- Contains all 4 character classes:
   - Uppercase Letters (A-Z)
   - Lowercase Letters (a-z)
   - Numbers (0-9)
-  - Punctuation
-  - Other Characters
+  - Punctuation (!@$&()#^*)
+- First character cannot be one of: !()[]{}*.#$
 """
 
 import secrets
@@ -20,19 +20,18 @@ import string
 UPPERCASE = string.ascii_uppercase  # A-Z
 LOWERCASE = string.ascii_lowercase  # a-z
 DIGITS = string.digits  # 0-9
-PUNCTUATION = string.punctuation  # !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
-OTHER_CHARS = "±§¶©®™°¢£¥€¤"  # Other special characters
+PUNCTUATION = "!@$&()#^*"  # Limited special characters
 
 ALL_CHAR_CLASSES = [
     ("Uppercase", UPPERCASE),
     ("Lowercase", LOWERCASE),
     ("Digits", DIGITS),
     ("Punctuation", PUNCTUATION),
-    ("Other", OTHER_CHARS),
 ]
 
 MIN_LENGTH = 20
 MIN_CLASSES = 4
+FORBIDDEN_FIRST_CHARS = "!()[]{}*.#$"  # Characters that cannot be first
 
 
 def check_password_classes(password: str) -> dict[str, bool]:
@@ -42,7 +41,6 @@ def check_password_classes(password: str) -> dict[str, bool]:
         "Lowercase": any(c in LOWERCASE for c in password),
         "Digits": any(c in DIGITS for c in password),
         "Punctuation": any(c in PUNCTUATION for c in password),
-        "Other": any(c in OTHER_CHARS for c in password),
     }
 
 
@@ -66,7 +64,7 @@ def generate_password(length: int = MIN_LENGTH) -> str:
         length = MIN_LENGTH
     
     # Build the combined character pool
-    all_chars = UPPERCASE + LOWERCASE + DIGITS + PUNCTUATION + OTHER_CHARS
+    all_chars = UPPERCASE + LOWERCASE + DIGITS + PUNCTUATION
     
     while True:
         # Ensure we have at least one character from 4 different classes
@@ -84,8 +82,10 @@ def generate_password(length: int = MIN_LENGTH) -> str:
         secrets.SystemRandom().shuffle(password_chars)
         password = "".join(password_chars)
         
-        # Verify the password meets requirements (should always pass, but double-check)
-        if count_classes(password) >= MIN_CLASSES and len(password) >= MIN_LENGTH:
+        # Verify the password meets requirements
+        if (count_classes(password) >= MIN_CLASSES and 
+            len(password) >= MIN_LENGTH and
+            password[0] not in FORBIDDEN_FIRST_CHARS):
             return password
 
 
@@ -100,7 +100,7 @@ def main():
     print(f"\n  {password}\n")
     print("=" * 50)
     print(f"Length: {len(password)} characters")
-    print(f"Character classes present ({sum(classes.values())}/5):")
+    print(f"Character classes present ({sum(classes.values())}/4):")
     for class_name, present in classes.items():
         status = "✓" if present else "✗"
         print(f"  {status} {class_name}")
